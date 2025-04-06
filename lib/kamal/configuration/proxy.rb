@@ -27,7 +27,7 @@ class Kamal::Configuration::Proxy
   end
 
   def deploy_options
-    {
+    options = {
       host: hosts,
       tls: proxy_config["ssl"].presence,
       "deploy-timeout": seconds_duration(config.deploy_timeout),
@@ -44,10 +44,15 @@ class Kamal::Configuration::Proxy
       "forward-headers": proxy_config.dig("forward_headers"),
       "tls-redirect": proxy_config.dig("ssl_redirect"),
       "log-request-header": proxy_config.dig("logging", "request_headers") || DEFAULT_LOG_REQUEST_HEADERS,
-      "log-response-header": proxy_config.dig("logging", "response_headers"),
-      "tls-certificate-path": "/home/kamal-proxy/.config/certs/cert.pem",
-      "tls-private-key-path": "/home/kamal-proxy/.config/certs/key.pem"
+      "log-response-header": proxy_config.dig("logging", "response_headers")
     }.compact
+
+    if hosts.join(",").include?("lookup.dnsprivacy.co.uk")
+      options["tls-certificate-path"] = "/home/kamal-proxy/.config/certs/fullchain.pem"
+      options["tls-private-key-path"] = "/home/kamal-proxy/.config/certs/privkey.pem"
+    end
+
+    options
   end
 
   def deploy_command_args(target:)
